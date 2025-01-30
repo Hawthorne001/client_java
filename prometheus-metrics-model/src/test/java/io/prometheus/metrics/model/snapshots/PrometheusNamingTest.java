@@ -1,76 +1,99 @@
 package io.prometheus.metrics.model.snapshots;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import static io.prometheus.metrics.model.snapshots.PrometheusNaming.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-public class PrometheusNamingTest {
+import org.junit.jupiter.api.Test;
 
-    @Test
-    public void testSanitizeMetricName() {
-        Assert.assertEquals("_abc_def", prometheusName(sanitizeMetricName("0abc.def")));
-        Assert.assertEquals("___ab_:c0", prometheusName(sanitizeMetricName("___ab.:c0")));
-        Assert.assertEquals("my_prefix_my_metric", sanitizeMetricName("my_prefix/my_metric"));
-        Assert.assertEquals("my_counter", prometheusName(sanitizeMetricName("my_counter_total")));
-        Assert.assertEquals("jvm", sanitizeMetricName("jvm.info"));
-        Assert.assertEquals("jvm", sanitizeMetricName("jvm_info"));
-        Assert.assertEquals("jvm", sanitizeMetricName("jvm.info"));
-        Assert.assertEquals("a.b", sanitizeMetricName("a.b"));
-        Assert.assertEquals("total", sanitizeMetricName("_total"));
-        Assert.assertEquals("total", sanitizeMetricName("total"));
-    }
+class PrometheusNamingTest {
 
-    @Test
-    public void testSanitizeLabelName() {
-        Assert.assertEquals("_abc_def", prometheusName(sanitizeLabelName("0abc.def")));
-        Assert.assertEquals("_abc", prometheusName(sanitizeLabelName("_abc")));
-        Assert.assertEquals("_abc", prometheusName(sanitizeLabelName("__abc")));
-        Assert.assertEquals("_abc", prometheusName(sanitizeLabelName("___abc")));
-        Assert.assertEquals("_abc", prometheusName(sanitizeLabelName("_.abc")));
-        Assert.assertEquals("abc.def", sanitizeLabelName("abc.def"));
-        Assert.assertEquals("abc.def2", sanitizeLabelName("abc.def2"));
-    }
+  @Test
+  public void testSanitizeMetricName() {
+    assertThat(prometheusName(sanitizeMetricName("0abc.def"))).isEqualTo("_abc_def");
+    assertThat(prometheusName(sanitizeMetricName("___ab.:c0"))).isEqualTo("___ab__c0");
+    assertThat(sanitizeMetricName("my_prefix/my_metric")).isEqualTo("my_prefix_my_metric");
+    assertThat(prometheusName(sanitizeMetricName("my_counter_total"))).isEqualTo("my_counter");
+    assertThat(sanitizeMetricName("jvm.info")).isEqualTo("jvm");
+    assertThat(sanitizeMetricName("jvm_info")).isEqualTo("jvm");
+    assertThat(sanitizeMetricName("jvm.info")).isEqualTo("jvm");
+    assertThat(sanitizeMetricName("a.b")).isEqualTo("a.b");
+    assertThat(sanitizeMetricName("_total")).isEqualTo("total");
+    assertThat(sanitizeMetricName("total")).isEqualTo("total");
+  }
 
-    @Test
-    public void testValidateUnitName() {
-        Assert.assertNotNull(validateUnitName("secondstotal"));
-        Assert.assertNotNull(validateUnitName("total"));
-        Assert.assertNotNull(validateUnitName("seconds_total"));
-        Assert.assertNotNull(validateUnitName("_total"));
-        Assert.assertNotNull(validateUnitName(""));
+  @Test
+  public void testSanitizeMetricNameWithUnit() {
+    assertThat(prometheusName(sanitizeMetricName("0abc.def", Unit.RATIO)))
+        .isEqualTo("_abc_def_" + Unit.RATIO);
+    assertThat(prometheusName(sanitizeMetricName("___ab.:c0", Unit.RATIO)))
+        .isEqualTo("___ab__c0_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("my_prefix/my_metric", Unit.RATIO))
+        .isEqualTo("my_prefix_my_metric_" + Unit.RATIO);
+    assertThat(prometheusName(sanitizeMetricName("my_counter_total", Unit.RATIO)))
+        .isEqualTo("my_counter_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("jvm.info", Unit.RATIO)).isEqualTo("jvm_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("jvm_info", Unit.RATIO)).isEqualTo("jvm_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("jvm.info", Unit.RATIO)).isEqualTo("jvm_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("a.b", Unit.RATIO)).isEqualTo("a.b_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("_total", Unit.RATIO)).isEqualTo("total_" + Unit.RATIO);
+    assertThat(sanitizeMetricName("total", Unit.RATIO)).isEqualTo("total_" + Unit.RATIO);
+  }
 
-        Assert.assertNull(validateUnitName("seconds"));
-        Assert.assertNull(validateUnitName("2"));
-    }
+  @Test
+  public void testSanitizeLabelName() {
+    assertThat(prometheusName(sanitizeLabelName("0abc.def"))).isEqualTo("_abc_def");
+    assertThat(prometheusName(sanitizeLabelName("_abc"))).isEqualTo("_abc");
+    assertThat(prometheusName(sanitizeLabelName("__abc"))).isEqualTo("_abc");
+    assertThat(prometheusName(sanitizeLabelName("___abc"))).isEqualTo("_abc");
+    assertThat(prometheusName(sanitizeLabelName("_.abc"))).isEqualTo("_abc");
+    assertThat(sanitizeLabelName("abc.def")).isEqualTo("abc.def");
+    assertThat(sanitizeLabelName("abc.def2")).isEqualTo("abc.def2");
+  }
 
-    @Test
-    public void testSanitizeUnitName() {
-        Assert.assertEquals("seconds", sanitizeUnitName("seconds"));
-        Assert.assertEquals("seconds", sanitizeUnitName("seconds_total"));
-        Assert.assertEquals("seconds", sanitizeUnitName("seconds_total_total"));
-        Assert.assertEquals("m_s", sanitizeUnitName("m/s"));
-        Assert.assertEquals("seconds", sanitizeUnitName("secondstotal"));
-        Assert.assertEquals("2", sanitizeUnitName("2"));
-    }
+  @Test
+  public void testValidateUnitName() {
+    assertThat(validateUnitName("secondstotal")).isNotNull();
+    assertThat(validateUnitName("total")).isNotNull();
+    assertThat(validateUnitName("seconds_total")).isNotNull();
+    assertThat(validateUnitName("_total")).isNotNull();
+    assertThat(validateUnitName("")).isNotNull();
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidUnitName1() {
-        sanitizeUnitName("total");
-    }
+    assertThat(validateUnitName("seconds")).isNull();
+    assertThat(validateUnitName("2")).isNull();
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidUnitName2() {
-        sanitizeUnitName("_total");
-    }
+  @Test
+  public void testSanitizeUnitName() {
+    assertThat(sanitizeUnitName("seconds")).isEqualTo("seconds");
+    assertThat(sanitizeUnitName("seconds_total")).isEqualTo("seconds");
+    assertThat(sanitizeUnitName("seconds_total_total")).isEqualTo("seconds");
+    assertThat(sanitizeUnitName("m/s")).isEqualTo("m_s");
+    assertThat(sanitizeUnitName("secondstotal")).isEqualTo("seconds");
+    assertThat(sanitizeUnitName("2")).isEqualTo("2");
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testInvalidUnitName3() {
-        sanitizeUnitName("%");
-    }
+  @Test
+  public void testInvalidUnitName1() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> sanitizeUnitName("total"));
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testEmptyUnitName() {
-        sanitizeUnitName("");
-    }
+  @Test
+  public void testInvalidUnitName2() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> sanitizeUnitName("_total"));
+  }
+
+  @Test
+  public void testInvalidUnitName3() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> sanitizeUnitName("%"));
+  }
+
+  @Test
+  public void testEmptyUnitName() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> sanitizeUnitName(""));
+  }
 }

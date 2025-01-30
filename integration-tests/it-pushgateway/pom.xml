@@ -5,32 +5,15 @@
     <parent>
         <groupId>io.prometheus</groupId>
         <artifactId>integration-tests</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>10.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>it-pushgateway</artifactId>
 
     <name>Integration Test - Pushgateway</name>
-    <url>http://github.com/prometheus/client_java</url>
     <description>
         Integration tests for the Pushgateway Exporter
     </description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <id>fstab</id>
-            <name>Fabian Stäber</name>
-            <email>fabian@fstab.de</email>
-        </developer>
-    </developers>
 
     <dependencies>
         <dependency>
@@ -43,11 +26,7 @@
             <artifactId>prometheus-metrics-exporter-pushgateway</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-            <scope>test</scope>
-        </dependency>
+
         <dependency>
             <groupId>io.prometheus</groupId>
             <artifactId>it-common</artifactId>

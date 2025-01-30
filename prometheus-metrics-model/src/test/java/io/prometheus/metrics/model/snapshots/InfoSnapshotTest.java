@@ -1,60 +1,73 @@
 package io.prometheus.metrics.model.snapshots;
 
-import org.junit.Assert;
-import org.junit.Test;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.util.Iterator;
+import org.junit.jupiter.api.Test;
 
-public class InfoSnapshotTest {
+class InfoSnapshotTest {
 
-    @Test
-    public void testCompleteGoodCase() {
-        InfoSnapshot snapshot = InfoSnapshot.builder()
-                .name("target")
-                .help("Target info")
-                .dataPoint(InfoSnapshot.InfoDataPointSnapshot.builder()
-                        .labels(Labels.of("instance_id", "127.0.0.1:9100", "service_name", "gateway"))
-                        .build())
-                .build();
-        Assert.assertEquals("target", snapshot.getMetadata().getName());
-        Assert.assertEquals("Target info", snapshot.getMetadata().getHelp());
-        Assert.assertFalse(snapshot.getMetadata().hasUnit());
-        Assert.assertEquals(1, snapshot.getDataPoints().size());
-    }
-
-    @Test
-    public void testEmptyInfo() {
-        InfoSnapshot snapshot = InfoSnapshot.builder().name("target").build();
-        Assert.assertEquals(0, snapshot.getDataPoints().size());
-    }
-
-    @Test(expected = UnsupportedOperationException.class)
-    public void testDataImmutable() {
-        InfoSnapshot snapshot = InfoSnapshot.builder()
-                .name("target")
-                .dataPoint(InfoSnapshot.InfoDataPointSnapshot.builder()
-                        .labels(Labels.of("instance_id", "127.0.0.1:9100", "service_name", "gateway.v1"))
-                        .build())
-                .dataPoint(InfoSnapshot.InfoDataPointSnapshot.builder()
-                        .labels(Labels.of("instance_id", "127.0.0.1:9200", "service_name", "gateway.v2"))
-                        .build())
-                .build();
-        Iterator<InfoSnapshot.InfoDataPointSnapshot> iterator = snapshot.getDataPoints().iterator();
-        iterator.next();
-        iterator.remove();
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testNameMustNotIncludeSuffix() {
+  @Test
+  public void testCompleteGoodCase() {
+    InfoSnapshot snapshot =
         InfoSnapshot.builder()
-                .name("jvm_info")
-                .build();
-    }
+            .name("target")
+            .help("Target info")
+            .dataPoint(
+                InfoSnapshot.InfoDataPointSnapshot.builder()
+                    .labels(Labels.of("instance_id", "127.0.0.1:9100", "service_name", "gateway"))
+                    .build())
+            .build();
+    assertThat(snapshot.getMetadata().getName()).isEqualTo("target");
+    assertThat(snapshot.getMetadata().getHelp()).isEqualTo("Target info");
+    assertThat(snapshot.getMetadata().hasUnit()).isFalse();
+    assertThat(snapshot.getDataPoints().size()).isOne();
+  }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testNameMustNotIncludeSuffixDot() {
+  @Test
+  void create() {
+    InfoSnapshot.InfoDataPointSnapshot snapshot =
+        new InfoSnapshot.InfoDataPointSnapshot(Labels.EMPTY);
+    assertThat(snapshot.getScrapeTimestampMillis()).isZero();
+  }
+
+  @Test
+  public void testEmptyInfo() {
+    InfoSnapshot snapshot = InfoSnapshot.builder().name("target").build();
+    assertThat(snapshot.getDataPoints()).isEmpty();
+  }
+
+  @Test
+  public void testDataImmutable() {
+    InfoSnapshot snapshot =
         InfoSnapshot.builder()
-                .name("jvm.info")
-                .build();
-    }
+            .name("target")
+            .dataPoint(
+                InfoSnapshot.InfoDataPointSnapshot.builder()
+                    .labels(
+                        Labels.of("instance_id", "127.0.0.1:9100", "service_name", "gateway.v1"))
+                    .build())
+            .dataPoint(
+                InfoSnapshot.InfoDataPointSnapshot.builder()
+                    .labels(
+                        Labels.of("instance_id", "127.0.0.1:9200", "service_name", "gateway.v2"))
+                    .build())
+            .build();
+    Iterator<InfoSnapshot.InfoDataPointSnapshot> iterator = snapshot.getDataPoints().iterator();
+    iterator.next();
+    assertThatExceptionOfType(UnsupportedOperationException.class).isThrownBy(iterator::remove);
+  }
+
+  @Test
+  public void testNameMustNotIncludeSuffix() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> InfoSnapshot.builder().name("jvm_info").build());
+  }
+
+  @Test
+  public void testNameMustNotIncludeSuffixDot() {
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> InfoSnapshot.builder().name("jvm.info").build());
+  }
 }

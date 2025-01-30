@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.prometheus</groupId>
         <artifactId>examples</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>10.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>example-exporter-multi-target</artifactId>
@@ -14,22 +14,6 @@
     <description>
         Prometheus Metrics Example for multi-target pattern implementation
     </description>
-
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <id>fstab</id>
-            <name>Guido Anzuoni</name>
-            <email>ganzuoni@gmail.com</email>
-        </developer>
-    </developers>
 
     <dependencies>
         <dependency>

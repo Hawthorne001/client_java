@@ -5,7 +5,7 @@
     <parent>
         <groupId>io.prometheus</groupId>
         <artifactId>example-exemplars-tail-sampling</artifactId>
-        <version>1.4.0-SNAPSHOT</version>
+        <version>10.0.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>example-hello-world-app</artifactId>
@@ -15,21 +15,9 @@
         Part of a distributed "Hello, World" REST service to show Exemplars with OpenTelemetry's distributed tracing
     </description>
 
-    <licenses>
-        <license>
-            <name>The Apache Software License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <developers>
-        <developer>
-            <id>fstab</id>
-            <name>Fabian Stäber</name>
-            <email>fabian@fstab.de</email>
-        </developer>
-    </developers>
+    <properties>
+        <java.version>17</java.version>
+    </properties>
 
     <dependencies>
         <dependency>
@@ -50,7 +38,7 @@
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-core</artifactId>
-            <version>10.1.24</version>
+            <version>11.0.2</version>
         </dependency>
     </dependencies>
 
@@ -69,7 +57,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>io.prometheus.metrics.examples.otel_exemplars.app.Main</mainClass>
+                                    <mainClass>io.prometheus.metrics.examples.otel.exemplars.app.Main</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

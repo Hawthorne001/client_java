@@ -1,62 +1,58 @@
 package io.prometheus.metrics.instrumentation.jvm;
 
-import io.prometheus.metrics.model.registry.MetricNameFilter;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
-import io.prometheus.metrics.model.snapshots.MetricSnapshots;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.Mockito;
-
-import java.io.IOException;
-import java.lang.management.CompilationMXBean;
-
 import static io.prometheus.metrics.instrumentation.jvm.TestUtil.convertToOpenMetricsFormat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 
-public class JvmCompilationMetricsTest {
+import io.prometheus.metrics.model.registry.MetricNameFilter;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import io.prometheus.metrics.model.snapshots.MetricSnapshots;
+import java.io.IOException;
+import java.lang.management.CompilationMXBean;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-    private CompilationMXBean mockCompilationBean = Mockito.mock(CompilationMXBean.class);
+class JvmCompilationMetricsTest {
 
-    @Before
-    public void setUp() {
-        when(mockCompilationBean.getTotalCompilationTime()).thenReturn(10000l);
-        when(mockCompilationBean.isCompilationTimeMonitoringSupported()).thenReturn(true);
-    }
+  private final CompilationMXBean mockCompilationBean = Mockito.mock(CompilationMXBean.class);
 
-    @Test
-    public void testGoodCase() throws IOException {
-        PrometheusRegistry registry = new PrometheusRegistry();
-        JvmCompilationMetrics.builder()
-                .compilationBean(mockCompilationBean)
-                .register(registry);
-        MetricSnapshots snapshots = registry.scrape();
+  @BeforeEach
+  public void setUp() {
+    when(mockCompilationBean.getTotalCompilationTime()).thenReturn(10000L);
+    when(mockCompilationBean.isCompilationTimeMonitoringSupported()).thenReturn(true);
+  }
 
-        String expected = "" +
-                "# TYPE jvm_compilation_time_seconds counter\n" +
-                "# UNIT jvm_compilation_time_seconds seconds\n" +
-                "# HELP jvm_compilation_time_seconds The total time in seconds taken for HotSpot class compilation\n" +
-                "jvm_compilation_time_seconds_total 10.0\n" +
-                "# EOF\n";
+  @Test
+  public void testGoodCase() throws IOException {
+    PrometheusRegistry registry = new PrometheusRegistry();
+    JvmCompilationMetrics.builder().compilationBean(mockCompilationBean).register(registry);
+    MetricSnapshots snapshots = registry.scrape();
 
-        Assert.assertEquals(expected, convertToOpenMetricsFormat(snapshots));
-    }
+    String expected =
+        "# TYPE jvm_compilation_time_seconds counter\n"
+            + "# UNIT jvm_compilation_time_seconds seconds\n"
+            + "# HELP jvm_compilation_time_seconds The total time in seconds taken for HotSpot class compilation\n"
+            + "jvm_compilation_time_seconds_total 10.0\n"
+            + "# EOF\n";
 
-    @Test
-    public void testIgnoredMetricNotScraped() {
-        MetricNameFilter filter = MetricNameFilter.builder()
-                .nameMustNotBeEqualTo("jvm_compilation_time_seconds_total")
-                .build();
+    assertThat(convertToOpenMetricsFormat(snapshots)).isEqualTo(expected);
+  }
 
-        PrometheusRegistry registry = new PrometheusRegistry();
-        JvmCompilationMetrics.builder()
-                .compilationBean(mockCompilationBean)
-                .register(registry);
-        MetricSnapshots snapshots = registry.scrape(filter);
+  @Test
+  public void testIgnoredMetricNotScraped() {
+    MetricNameFilter filter =
+        MetricNameFilter.builder()
+            .nameMustNotBeEqualTo("jvm_compilation_time_seconds_total")
+            .build();
 
-        verify(mockCompilationBean, times(0)).getTotalCompilationTime();
-        Assert.assertEquals(0, snapshots.size());
-    }
+    PrometheusRegistry registry = new PrometheusRegistry();
+    JvmCompilationMetrics.builder().compilationBean(mockCompilationBean).register(registry);
+    MetricSnapshots snapshots = registry.scrape(filter);
+
+    verify(mockCompilationBean, times(0)).getTotalCompilationTime();
+    assertThat(snapshots.size()).isZero();
+  }
 }

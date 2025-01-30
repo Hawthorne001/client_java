@@ -1,48 +1,53 @@
 package io.prometheus.metrics.exporter.pushgateway;
 
-import io.prometheus.metrics.core.metrics.Gauge;
-import io.prometheus.metrics.model.registry.PrometheusRegistry;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.mockserver.client.MockServerClient;
-import org.mockserver.junit.MockServerRule;
-
-import java.io.IOException;
-
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
 
-public class BearerTokenPushGatewayTest {
+import io.prometheus.metrics.core.metrics.Gauge;
+import io.prometheus.metrics.model.registry.PrometheusRegistry;
+import java.io.IOException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockserver.client.MockServerClient;
+import org.mockserver.integration.ClientAndServer;
 
-    @Rule
-    public MockServerRule mockServerRule = new MockServerRule(this);
-    private MockServerClient mockServerClient;
+class BearerTokenPushGatewayTest {
 
-    PrometheusRegistry registry;
-    Gauge gauge;
-    PushGateway pushGateway;
+  private MockServerClient mockServerClient;
 
-    @Before
-    public void setUp() {
-        registry = new PrometheusRegistry();
-        gauge = Gauge.builder().name("g").help("help").build();
-        pushGateway = PushGateway.builder()
-                .address("localhost:" + mockServerRule.getPort())
-                .bearerToken("xxx")
-                .registry(registry)
-                .job("j")
-                .build();
-    }
+  PrometheusRegistry registry;
+  Gauge gauge;
+  PushGateway pushGateway;
 
-    @Test
-    public void testAuthorizedPush() throws IOException {
-        mockServerClient.when(
-                request()
-                        .withMethod("PUT")
-                        .withHeader("Authorization", "Bearer xxx")
-                        .withPath("/metrics/job/j")
-        ).respond(response().withStatusCode(202));
-        pushGateway.push();
-    }
+  @BeforeEach
+  public void setUp() {
+    mockServerClient = ClientAndServer.startClientAndServer(0);
+    registry = new PrometheusRegistry();
+    gauge = Gauge.builder().name("g").help("help").build();
+    pushGateway =
+        PushGateway.builder()
+            .address("localhost:" + mockServerClient.getPort())
+            .bearerToken("xxx")
+            .registry(registry)
+            .job("j")
+            .build();
+  }
+
+  @AfterEach
+  void tearDown() {
+    mockServerClient.stop();
+  }
+
+  @Test
+  public void testAuthorizedPush() throws IOException {
+    mockServerClient
+        .when(
+            request()
+                .withMethod("PUT")
+                .withHeader("Authorization", "Bearer xxx")
+                .withPath("/metrics/job/j"))
+        .respond(response().withStatusCode(202));
+    pushGateway.push();
+  }
 }
